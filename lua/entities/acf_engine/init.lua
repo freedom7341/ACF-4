@@ -274,6 +274,7 @@ do -- Spawn and Update functions
 		Entity.ClassData        = Class
 		Entity.DefaultSound     = EngineData.Sound
 		Entity.SoundPitch       = EngineData.Pitch or 1
+		Engine.TorqueCurve		= EngineData.TorqueCurve
 		Entity.PeakTorque       = EngineData.Torque
 		Entity.PeakTorqueHeld   = EngineData.Torque
 		Entity.IdleRPM          = EngineData.RPM.Idle
@@ -638,6 +639,31 @@ function ENT:GetConsumption(Throttle, RPM)
 	return Consumption
 end
 
+function InterpolatePoints(points, pos)
+	if #points < 4 then
+		error("Must have at least 4 points in array")
+	end
+	local currentPoint = math.floor(pos * (#points - 1) + 1)
+	local Mu = 0
+	if pos <= 0 then
+		Mu = 0
+	elseif pos >= 1 then
+		Mu = 1
+        else
+		Mu = pos * (#points - 1)
+        	Mu = Mu % 1
+	end
+
+	local P0 = points[math.Clamp(currentPoint - 1, 1, #points - 2)]
+	local P1 = points[math.Clamp(currentPoint, 1, #points - 1)]
+	local P2 = points[math.Clamp(currentPoint + 1, 2, #points)]
+	local P3 = points[math.Clamp(currentPoint + 2, 3, #points)]
+	return 0.5 * ((2 * P1) +
+	(P2 - P0) * Mu +
+	(2 * P0 - 5 * P1 + 4 * P2 - P3) * Mu ^ 2 +
+	(3 * P1 - P0 - 3 * P2 + P3) * Mu ^ 3)
+end
+
 function ENT:CalcRPM()
 	if not self.Active then return end
 
@@ -663,7 +689,12 @@ function ENT:CalcRPM()
 	end
 
 	-- Calculate the current torque from flywheel RPM
-	self.Torque = self.Throttle * max(self.PeakTorque * math.min(self.FlyRPM / self.PeakMinRPM, (self.LimitRPM - self.FlyRPM) / (self.LimitRPM - self.PeakMaxRPM), 1), 0)
+	-- If there is no torque curve, use the "torque trapezoid"
+	if not self.TorqueCurve then
+		self.Torque = self.Throttle * max(self.PeakTorque * math.min(self.FlyRPM / self.PeakMinRPM, (self.LimitRPM - self.FlyRPM) / (self.LimitRPM - self.PeakMaxRPM), 1), 0)
+	else
+		self.Torque = self.Throttle * max(self.PeakTorque * InterpolatePoints(self.TorqueCurve, self.FlyRPM / self.PeakMaxRPM), 1)
+	end
 
 	local PeakRPM = self.IsElectric and self.FlywheelOverride or self.PeakMaxRPM
 	local Drag = self.PeakTorque * (max(self.FlyRPM - self.IdleRPM, 0) / PeakRPM) * (1 - self.Throttle) / self.Inertia
