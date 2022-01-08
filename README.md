@@ -1,11 +1,11 @@
 # Armored Combat Framework
 > A standardized combat and damage addon for Garry's Mod
-[![Repository Size](https://img.shields.io/github/repo-size/Stooberton/ACF-3?label=Repository%20Size&style=flat-square)](https://github.com/freedom7341/ACF-4)
-[![Commit Activity](https://img.shields.io/github/commit-activity/m/Stooberton/ACF-3?label=Commit%20Activity&style=flat-square)](https://github.com/freedom7341/ACF-4/graphs/commit-activity)
+[![Repository Size](https://img.shields.io/github/repo-size/freedom7341/ACF-4?label=Repository%20Size&style=flat-square)](https://github.com/freedom7341/ACF-4)
+[![Commit Activity](https://img.shields.io/github/commit-activity/m/freedom7341/ACF-4?label=Commit%20Activity&style=flat-square)](https://github.com/freedom7341/ACF-4/graphs/commit-activity)
 
-Armored Combat Framework (ACF) is an addon for Garry's Mod that implements a damage system for props and players, while also providing entities and tools to build fairly realistic armored combat vehicles. Players may choose from an array of guns, ammo types, crates for fuel and ammo, engines, transmissions and more while armoring their contraptions for combat.
+Armored Combat Framework (ACF) is an addon for Garry's Mod that implements awesome mobility and NOTHING ELSE.
 
-Ammunition is customizable with varying ballistic performance along with armor being customizable for protection against various threats. ACF is intended to be balanced for multiplayer and competitive use but there is, of course, nothing wrong with blasting some NPCs.
+Ammunition is GONE!
 
 ![ACF Logo](acf-logo.png)
 
