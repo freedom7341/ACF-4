@@ -297,8 +297,8 @@ do -- Spawn and Update functions
 
 		Entity:SetNWString("WireName", "ACF " .. Entity.Name)
 
-		-- Create a torque curve for the engine
-		-- based on engine type if it doesn't have one
+		-- Create a torque curve for the engine using
+		-- its engine type if it doesn't have one.
 		if not Entity.TorqueCurve then
 			if Entity.EngineType == "GenericPetrol" then
 				Entity.TorqueCurve = {0.1, 0.3, 0.6, 0.8, 1, 0.6}
@@ -313,9 +313,12 @@ do -- Spawn and Update functions
 			end
 		end
 
-		--calculate boosted peak kw
+		-- Calculate peak kW. For the hell of it, it'll calculate a
+		-- powerband based on the torque curve where applicable, too.
 		if Entity.TorqueCurve then
 			Entity.peakkw = Entity.PeakTorque * (table.GetWinningKey(Entity.TorqueCurve) / #Entity.TorqueCurve * Entity.LimitRPM) / 9548.8
+			Entity.PeakMinRPM = math.Round(math.Clamp(table.GetWinningKey(Entity.TorqueCurve) / #Entity.TorqueCurve * Entity.LimitRPM * 0.85, 0, Entity.LimitRPM) / 50) * 50
+			Entity.PeakMaxRPM = math.Round(math.Clamp(table.GetWinningKey(Entity.TorqueCurve) / #Entity.TorqueCurve * Entity.LimitRPM * 1.15, 0, Entity.LimitRPM) / 50) * 50
 			Entity.PeakKwRPM = Entity.PeakMaxRPM
 		elseif EngineType.CalculatePeakEnergy and not Entity.TorqueCurve then
 			local peakkw, PeakKwRPM = EngineType.CalculatePeakEnergy(Entity)
@@ -531,9 +534,9 @@ function ENT:UpdateOutputs()
 	local Power = self.Torque * self.FlyRPM / 9548.8
 
 	WireLib.TriggerOutput(self, "Fuel Use", self.FuelUsage)
-	WireLib.TriggerOutput(self, "Torque", math.floor(self.Torque))
-	WireLib.TriggerOutput(self, "Power", math.floor(Power))
-	WireLib.TriggerOutput(self, "RPM", math.floor(self.FlyRPM))
+	WireLib.TriggerOutput(self, "Torque", self.Torque)
+	WireLib.TriggerOutput(self, "Power", Power)
+	WireLib.TriggerOutput(self, "RPM", self.FlyRPM)
 end
 
 local Text = "%s\n\n%s\nPower: %s kW / %s hp\nTorque: %s Nm / %s ft-lb\nPowerband: %s - %s RPM\nRedline: %s RPM"
