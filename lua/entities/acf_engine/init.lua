@@ -274,7 +274,7 @@ do -- Spawn and Update functions
 		Entity.ClassData        = Class
 		Entity.DefaultSound     = EngineData.Sound
 		Entity.SoundPitch       = EngineData.Pitch or 1
-		Engine.TorqueCurve		= EngineData.TorqueCurve
+		Entity.TorqueCurve		= EngineData.TorqueCurve
 		Entity.PeakTorque       = EngineData.Torque
 		Entity.PeakTorqueHeld   = EngineData.Torque
 		Entity.IdleRPM          = EngineData.RPM.Idle
@@ -375,6 +375,22 @@ do -- Spawn and Update functions
 
 		if Class.OnSpawn then
 			Class.OnSpawn(Engine, Data, Class, EngineData)
+		end
+
+		-- Create a torque curve for the engine
+		-- based on engine type if it doesn't have one
+		if not Engine.TorqueCurve then
+			if Engine.EngineType == "GenericPetrol" then
+				Engine.TorqueCurve = {0.1, 0.3, 0.6, 0.8, 1, 0.6}
+			elseif Engine.EngineType == "GenericDiesel" then
+				Engine.TorqueCurve = {0.2, 0.5, 0.7, 1, 0.8, 0.6}
+			elseif Engine.EngineType == "Wankel" then
+				Engine.TorqueCurve = {0.1, 0.6, 0.8, 1, 0.7, 0.4}
+			elseif Engine.EngineType == "Turbine" then
+				Engine.TorqueCurve = {0.9, 1, 0.8, 0.6, 0.4, 0.2}
+			elseif Engine.EngineType == "Electric" then
+				Engine.TorqueCurve = {1, 0.95, 0.9, 0.75, 0.6, 0.45}
+			end
 		end
 
 		HookRun("ACF_OnEntitySpawn", "acf_engine", Engine, Data, Class, EngineData)
@@ -693,7 +709,7 @@ function ENT:CalcRPM()
 	if not self.TorqueCurve then
 		self.Torque = self.Throttle * max(self.PeakTorque * math.min(self.FlyRPM / self.PeakMinRPM, (self.LimitRPM - self.FlyRPM) / (self.LimitRPM - self.PeakMaxRPM), 1), 0)
 	else
-		self.Torque = self.Throttle * max(self.PeakTorque * InterpolatePoints(self.TorqueCurve, self.FlyRPM / self.PeakMaxRPM), 1)
+		self.Torque = self.Throttle * max(self.PeakTorque * InterpolatePoints(self.TorqueCurve, self.FlyRPM / self.PeakMaxRPM), 1) * (self.FlyRPM < self.LimitRPM and 1 or 0)
 	end
 
 	local PeakRPM = self.IsElectric and self.FlywheelOverride or self.PeakMaxRPM
