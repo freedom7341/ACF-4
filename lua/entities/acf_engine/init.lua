@@ -297,13 +297,32 @@ do -- Spawn and Update functions
 
 		Entity:SetNWString("WireName", "ACF " .. Entity.Name)
 
+		-- Create a torque curve for the engine
+		-- based on engine type if it doesn't have one
+		if not Entity.TorqueCurve then
+			if Entity.EngineType == "GenericPetrol" then
+				Entity.TorqueCurve = {0.1, 0.3, 0.6, 0.8, 1, 0.6}
+			elseif Entity.EngineType == "GenericDiesel" then
+				Entity.TorqueCurve = {0.2, 0.5, 0.7, 1, 0.8, 0.6}
+			elseif Entity.EngineType == "Wankel" then
+				Entity.TorqueCurve = {0.1, 0.6, 0.8, 1, 0.7, 0.4}
+			elseif Entity.EngineType == "Turbine" then
+				Entity.TorqueCurve = {0.9, 1, 0.8, 0.6, 0.4, 0.2}
+			elseif Entity.EngineType == "Electric" then
+				Entity.TorqueCurve = {1, 0.95, 0.9, 0.75, 0.6, 0.45}
+			end
+		end
+
 		--calculate boosted peak kw
-		if EngineType.CalculatePeakEnergy then
+		if Entity.TorqueCurve then
+			Entity.peakkw = Entity.PeakTorque * (table.GetWinningKey(Entity.TorqueCurve) / #Entity.TorqueCurve * Entity.LimitRPM) / 9548.8
+			Entity.PeakKwRPM = Entity.PeakMaxRPM
+		elseif EngineType.CalculatePeakEnergy and not Entity.TorqueCurve then
 			local peakkw, PeakKwRPM = EngineType.CalculatePeakEnergy(Entity)
 
 			Entity.peakkw = peakkw
 			Entity.PeakKwRPM = PeakKwRPM
-		else
+		elseif not Entity.TorqueCurve then
 			Entity.peakkw = Entity.PeakTorque * Entity.PeakMaxRPM / 9548.8
 			Entity.PeakKwRPM = Entity.PeakMaxRPM
 		end
@@ -375,22 +394,6 @@ do -- Spawn and Update functions
 
 		if Class.OnSpawn then
 			Class.OnSpawn(Engine, Data, Class, EngineData)
-		end
-
-		-- Create a torque curve for the engine
-		-- based on engine type if it doesn't have one
-		if not Engine.TorqueCurve then
-			if Engine.EngineType == "GenericPetrol" then
-				Engine.TorqueCurve = {0.1, 0.3, 0.6, 0.8, 1, 0.6}
-			elseif Engine.EngineType == "GenericDiesel" then
-				Engine.TorqueCurve = {0.2, 0.5, 0.7, 1, 0.8, 0.6}
-			elseif Engine.EngineType == "Wankel" then
-				Engine.TorqueCurve = {0.1, 0.6, 0.8, 1, 0.7, 0.4}
-			elseif Engine.EngineType == "Turbine" then
-				Engine.TorqueCurve = {0.9, 1, 0.8, 0.6, 0.4, 0.2}
-			elseif Engine.EngineType == "Electric" then
-				Engine.TorqueCurve = {1, 0.95, 0.9, 0.75, 0.6, 0.45}
-			end
 		end
 
 		HookRun("ACF_OnEntitySpawn", "acf_engine", Engine, Data, Class, EngineData)
@@ -709,7 +712,7 @@ function ENT:CalcRPM()
 	if not self.TorqueCurve then
 		self.Torque = self.Throttle * max(self.PeakTorque * math.min(self.FlyRPM / self.PeakMinRPM, (self.LimitRPM - self.FlyRPM) / (self.LimitRPM - self.PeakMaxRPM), 1), 0)
 	else
-		self.Torque = self.Throttle * max(self.PeakTorque * InterpolatePoints(self.TorqueCurve, self.FlyRPM / self.PeakMaxRPM), 1) * (self.FlyRPM < self.LimitRPM and 1 or 0)
+		self.Torque = self.Throttle * max(self.PeakTorque * InterpolatePoints(self.TorqueCurve, self.FlyRPM / self.LimitRPM), 1) * (self.FlyRPM < self.LimitRPM and 1 or 0)
 	end
 
 	local PeakRPM = self.IsElectric and self.FlywheelOverride or self.PeakMaxRPM
