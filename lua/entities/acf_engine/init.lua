@@ -380,7 +380,9 @@ do -- Spawn and Update functions
 		Engine.Throttle     = 0
 		Engine.FlyRPM       = 0
 		Engine.SoundPath    = EngineData.Sound
-		Engine.Inputs       = WireLib.CreateInputs(Engine, { "Active (Turns the engine on if it is not 0)", "Throttle (0-100 for how hard the engine should run)" })
+		Engine.Inputs       = WireLib.CreateInputs(Engine, {
+			"Active (Turns the engine on if it is not 0)",
+			"Throttle (0-100 for how hard the engine should run)" })
 		Engine.Outputs      = WireLib.CreateOutputs(Engine, {
 			"RPM (Current rotations per minute of the engine)",
 			"Torque (nM of torque from the engine)",
